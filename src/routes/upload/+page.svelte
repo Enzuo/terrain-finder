@@ -33,7 +33,7 @@
 <main style="max-width: 500px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #fff;">
   Télécharger les parcelles depuis : <a href="https://files.data.gouv.fr/cadastre/etalab-cadastre/2023-01-01/geojson/communes/" target="_blank">https://files.data.gouv.fr/cadastre/etalab-cadastre/2023-01-01/geojson/communes/</a>
   <h1>Upload a File</h1>
-  <input type="file" accept="application/json" on:change={handleFileChange} />
+  <input type="file" accept="application/json,application/gzip,.json,.gz" on:change={handleFileChange} />
   {#if fileName}
     <p><strong>Selected file:</strong> {fileName}</p>
     {#if error}
