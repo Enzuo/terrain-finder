@@ -1,6 +1,7 @@
 <script>
   import { parseJsonFile } from '$lib/parseJsonFile.js';
   import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { listTerrainKeys, saveTerrainData } from '$lib/terrainDb.js';
   import { onMount } from 'svelte';
   import { loadCommunesMap } from '$lib/communes.js';
@@ -15,7 +16,7 @@
 
   async function selectKey(key) {
     localStorage.setItem('currentFile', key);
-    goto('/map');
+    goto(resolve('/map'));
   }
   let file;
   let fileName = '';
@@ -40,7 +41,7 @@
         const key = match ? match[1] : 'terrainData';
         await saveTerrainData(key, json);
         localStorage.setItem('currentFile', key);
-        goto('/map');
+        goto(resolve('/map'));
       } catch (err) {
         error = err.message;
       }
@@ -49,7 +50,7 @@
 </script>
 
 <main style="max-width: 500px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #fff;">
-  <img src="/src/lib/assets/favicon.png" alt="App Icon" style="width:48px;height:48px;margin-bottom:1rem;display:block;margin-left:auto;margin-right:auto;" />
+  <img src="favicon.png" alt="App Icon" style="width:48px;height:48px;margin-bottom:1rem;display:block;margin-left:auto;margin-right:auto;" />
   Télécharger les parcelles depuis : <a href="https://files.data.gouv.fr/cadastre/etalab-cadastre/2023-01-01/geojson/communes/" target="_blank">https://files.data.gouv.fr/cadastre/etalab-cadastre/2023-01-01/geojson/communes/</a>
   <h1>Upload a File</h1>
   <input type="file" accept="application/json,application/gzip,.json,.gz" on:change={handleFileChange} />
