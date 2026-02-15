@@ -1,7 +1,19 @@
 <script>
   import { parseJsonFile } from '$lib/parseJsonFile.js';
   import { goto } from '$app/navigation';
-  import { saveTerrainData } from '$lib/terrainDb.js';
+  import { listTerrainKeys, saveTerrainData } from '$lib/terrainDb.js';
+  import { onMount } from 'svelte';
+
+  let dbKeys = [];
+
+  onMount(async () => {
+    dbKeys = await listTerrainKeys();
+  });
+
+  async function selectKey(key) {
+    localStorage.setItem('currentFile', key);
+    goto('/map');
+  }
   let file;
   let fileName = '';
   let fileContent = '';
@@ -20,9 +32,12 @@
         const json = await parseJsonFile(file);
         parsedJson = json;
         fileContent = JSON.stringify(json, null, 2);
-        // Store parsed data in IndexedDB and navigate
-        await saveTerrainData('terrainData', json);
-        goto('/display');
+        // Extract number from filename (e.g., 12345.json or 12345.gz)
+        const match = file.name.match(/(\d+)/);
+        const key = match ? match[1] : 'terrainData';
+        await saveTerrainData(key, json);
+        localStorage.setItem('currentFile', key);
+        goto('/map');
       } catch (err) {
         error = err.message;
       }
@@ -40,4 +55,15 @@
       <p style="color: red;"><strong>Error:</strong> {error}</p>
     {/if}
   {/if}
+
+  <h2>Available Files in Database</h2>
+  <ul style="margin-bottom: 2em;">
+    {#each dbKeys as key}
+      <li>
+        <button 
+          style="cursor:pointer; border:none; background:none; color:#0077ff; text-decoration:underline; font-size:1em;" 
+          on:click={() => selectKey(key)}>{key}</button>
+      </li>
+    {/each}
+  </ul>
 </main>

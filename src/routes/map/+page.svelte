@@ -14,11 +14,13 @@
   let polygonLayers = []
   /** @type {App.TerrainData | null} */
   let terrainData = null // TerrainData
+  let currentFileKey = null
 
   import { loadTerrainData } from '$lib/terrainDb.js'
   async function loadTerrainDataFromDb() {
     try {
-      const stored = await loadTerrainData('terrainData')
+      currentFileKey = localStorage.getItem('currentFile')
+      const stored = await loadTerrainData(currentFileKey)
       if (stored) {
         terrainData = stored
       } else {
@@ -31,8 +33,11 @@
 
   onMount(async () => {
     await loadTerrainDataFromDb()
+    var defaultView = terrainData && terrainData.features.length
+      ? terrainData.features[0].geometry.coordinates[0][0].reverse()
+      : [46.3105761, 0.1725793]
     try {
-      map = L.map(mapContainer, { maxZoom: 19 }).setView([46.3105761, 0.1725793], 13);
+      map = L.map(mapContainer, { maxZoom: 19 }).setView(defaultView, 12);
       const osm = L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
       {
@@ -160,7 +165,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </svelte:head>
 
-<CollapsibleSidebar title="Map Controls">
+<CollapsibleSidebar title="Map {currentFileKey}">
   <div style="margin-bottom: 1.5em;">
     <label for="filter-number" style="font-weight: bold; display: block; margin-bottom: 0.5em;"
       >Terrain Size</label

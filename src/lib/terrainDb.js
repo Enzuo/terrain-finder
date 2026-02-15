@@ -50,3 +50,27 @@ export async function loadTerrainData(key) {
     req.onerror = () => reject(req.error);
   });
 }
+
+/**
+ * List all keys in the terrain object store.
+ * @returns {Promise<string[]>}
+ */
+export async function listTerrainKeys() {
+  const db = await openTerrainDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('terrain', 'readonly');
+    const store = tx.objectStore('terrain');
+    const keys = [];
+    const req = store.openCursor();
+    req.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        keys.push(cursor.key);
+        cursor.continue();
+      } else {
+        resolve(keys);
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
