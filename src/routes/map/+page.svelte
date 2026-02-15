@@ -20,7 +20,7 @@
   let currentFileKey = null
 
   onMount(async () => {
-    const currentFileKey = localStorage.getItem('currentFile')
+    currentFileKey = localStorage.getItem('currentFile')
     console.log('Attempting to load terrain data for current file...', currentFileKey)
     const stored = await loadTerrainData(currentFileKey)
     terrainData = stored || null
