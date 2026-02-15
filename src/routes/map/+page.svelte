@@ -33,9 +33,18 @@
     loadTerrainData()
     try {
       map = L.map(mapContainer).setView([46.3105761, 0.1725793], 13)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map)
+      });
+      const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      });
+      const baseMaps = {
+        "OpenStreetMap": osm,
+        "Satellite (Esri)": esriSat
+      };
+      osm.addTo(map);
+      L.control.layers(baseMaps, undefined, { position: 'bottomleft' }).addTo(map);
     } catch (e) {
       error = 'Failed to load Leaflet: ' + e.message
     }
