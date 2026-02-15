@@ -3,11 +3,14 @@
   import { goto } from '$app/navigation';
   import { listTerrainKeys, saveTerrainData } from '$lib/terrainDb.js';
   import { onMount } from 'svelte';
+  import { loadCommunesMap } from '$lib/communes.js';
 
   let dbKeys = [];
+  let communesMap = new Map();
 
   onMount(async () => {
     dbKeys = await listTerrainKeys();
+    communesMap = await loadCommunesMap();
   });
 
   async function selectKey(key) {
@@ -58,12 +61,17 @@
 
   <h2>Available Files in Database</h2>
   <ul style="margin-bottom: 2em;">
-    {#each dbKeys as key}
-      <li>
-        <button 
-          style="cursor:pointer; border:none; background:none; color:#0077ff; text-decoration:underline; font-size:1em;" 
-          on:click={() => selectKey(key)}>{key}</button>
-      </li>
-    {/each}
+      {#each dbKeys as key}
+        <li>
+          <button 
+            style="cursor:pointer; border:none; background:none; color:#0077ff; text-decoration:underline; font-size:1em;" 
+            on:click={() => selectKey(key)}>
+              {key}
+              {#if communesMap && communesMap.get(key)}
+                <span style="margin-left: 0.5em; color: #333;">({communesMap.get(key)})</span>
+              {/if}
+          </button>
+        </li>
+      {/each}
   </ul>
 </main>
