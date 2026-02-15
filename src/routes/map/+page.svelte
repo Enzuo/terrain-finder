@@ -2,6 +2,11 @@
   import { onMount } from 'svelte'
   import L from 'leaflet'
   import CollapsibleSidebar from '$lib/CollapsibleSidebar.svelte'
+  import { filterAndSortPolygons } from '$lib/terrainUtils.js'
+  import { loadTerrainData } from '$lib/terrainDb.js'
+
+  /** @type {App.TerrainData|null} */
+  let terrainData
   let map
   let mapContainer
   let error = ''
@@ -12,44 +17,32 @@
   /** @type {string|null} */
   let selectedPolygonId = null
   let polygonLayers = []
-  /** @type {App.TerrainData | null} */
-  let terrainData = null // TerrainData
   let currentFileKey = null
 
-  import { loadTerrainData } from '$lib/terrainDb.js'
-  async function loadTerrainDataFromDb() {
-    try {
-      currentFileKey = localStorage.getItem('currentFile')
-      const stored = await loadTerrainData(currentFileKey)
-      if (stored) {
-        terrainData = stored
-      } else {
-        terrainData = null
-      }
-    } catch (e) {
-      terrainData = null
-    }
-  }
-
   onMount(async () => {
-    await loadTerrainDataFromDb()
-    var defaultView = terrainData && terrainData.features.length
-      ? terrainData.features[0].geometry.coordinates[0][0].reverse()
-      : [46.3105761, 0.1725793]
+    const currentFileKey = localStorage.getItem('currentFile')
+    console.log('Attempting to load terrain data for current file...', currentFileKey)
+    const stored = await loadTerrainData(currentFileKey)
+    terrainData = stored || null
+
+    var defaultView =
+      terrainData && terrainData.features.length
+        ? terrainData.features[0].geometry.coordinates[0][0].reverse()
+        : [46.3105761, 0.1725793]
     try {
-      map = L.map(mapContainer, { maxZoom: 19 }).setView(defaultView, 12);
-      const osm = L.tileLayer(
-        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
-      {
+      map = L.map(mapContainer, { maxZoom: 19 }).setView(defaultView, 12)
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
       })
       const esriSat = L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-        maxZoom: 19
-      })
+        {
+          attribution:
+            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+          maxZoom: 19
+        }
+      )
       const baseMaps = {
         OpenStreetMap: osm,
         'Satellite (Esri)': esriSat
@@ -67,23 +60,15 @@
   })
 
   // Watch for terrainSize changes and update polygons
-  $: if (map && terrainSize && terrainData) {
+  $: if (map && terrainSize) {
+    if (!terrainData) {
+      console.warn('No terrain data available to filter polygons.')
+    }
     // Remove previous polygons
     polygonLayers.forEach((layer) => map.removeLayer(layer))
     polygonLayers = []
-    // Filter polygons by contenance
-    polygons = terrainData.features.filter(
-      (f) =>
-        f.properties &&
-        f.properties.contenance >= terrainSize - terrainMargin &&
-        f.properties.contenance <= terrainSize + terrainMargin
-    )
-    // Sorted list filtered polygons by distance to terrainSize
-    polygons = polygons.sort(
-      (a, b) =>
-        Math.abs(a.properties.contenance - terrainSize) -
-        Math.abs(b.properties.contenance - terrainSize)
-    )
+    // Use filtering logic from +page.js
+    polygons = filterAndSortPolygons(terrainData, terrainSize, terrainMargin)
 
     polygons.forEach((feature) => {
       if (feature.geometry && feature.geometry.type === 'Polygon') {
@@ -151,15 +136,15 @@
   }
 
   // For scrolling selected polygon into view
-  let terrainListContainer;
+  let terrainListContainer
   /** @type {HTMLLIElement[]} */
-  let terrainListItems = [];
+  let terrainListItems = []
 
   $: {
     if (selectedPolygonId && polygons.length && terrainListItems.length) {
-      const idx = polygons.findIndex(p => p.id === selectedPolygonId);
+      const idx = polygons.findIndex((p) => p.id === selectedPolygonId)
       if (idx !== -1 && terrainListItems[idx]) {
-        terrainListItems[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        terrainListItems[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' })
       }
     }
   }
@@ -201,18 +186,18 @@
     {polygons.length}
     {#if selectedPolygonId}
       {#if polygons.length}
-        &nbsp;|&nbsp;Selected: {polygons.findIndex(p => p.id === selectedPolygonId) + 1} / {polygons.length}
+        &nbsp;|&nbsp;Selected: {polygons.findIndex((p) => p.id === selectedPolygonId) + 1} / {polygons.length}
       {/if}
     {/if}
   </div>
-  <div style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;" bind:this={terrainListContainer}>
+  <div
+    style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;"
+    bind:this={terrainListContainer}
+  >
     <strong>All terrains (sorted by closest size):</strong>
     <ul style="margin: 0; padding-left: 1em;">
       {#each polygons as poly, i (poly.id)}
-        <li
-          style="list-style: none; margin-bottom: 0.25em;"
-          bind:this={terrainListItems[i]}
-        >
+        <li style="list-style: none; margin-bottom: 0.25em;" bind:this={terrainListItems[i]}>
           <button
             type="button"
             style="cursor:pointer; text-decoration:underline; border:none; background:none; padding:0; font:inherit; {selectedPolygonId ===
