@@ -32,17 +32,19 @@
   onMount(async () => {
     await loadTerrainDataFromDb()
     try {
-      map = L.map(mapContainer).setView([46.3105761, 0.1725793], 13)
-      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+      map = L.map(mapContainer, { maxZoom: 19 }).setView([46.3105761, 0.1725793], 13);
+      const osm = L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+      {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
       })
       const esriSat = L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        {
-          attribution:
-            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-        }
-      )
+      {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        maxZoom: 19
+      })
       const baseMaps = {
         OpenStreetMap: osm,
         'Satellite (Esri)': esriSat
@@ -100,7 +102,7 @@
     selectedPolygonId = feature.id
     const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])
     const bounds = L.latLngBounds(coords)
-    map.fitBounds(bounds, { maxZoom: 18, animate: true })
+    map.fitBounds(bounds, { maxZoom: 19, animate: true })
     // Copy only the first coordinate pair (lat, lng) to clipboard
     try {
       const coordinates = coords[0]
