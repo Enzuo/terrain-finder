@@ -138,6 +138,20 @@
       centerOnPolygon(polygons[currentPolygonIndex])
     }
   }
+
+  // For scrolling selected polygon into view
+  let terrainListContainer;
+  /** @type {HTMLLIElement[]} */
+  let terrainListItems = [];
+
+  $: {
+    if (selectedPolygonId && polygons.length && terrainListItems.length) {
+      const idx = polygons.findIndex(p => p.id === selectedPolygonId);
+      if (idx !== -1 && terrainListItems[idx]) {
+        terrainListItems[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }
 </script>
 
 <svelte:head>
@@ -180,11 +194,14 @@
       {/if}
     {/if}
   </div>
-  <div style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;">
+  <div style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;" bind:this={terrainListContainer}>
     <strong>All terrains (sorted by closest size):</strong>
     <ul style="margin: 0; padding-left: 1em;">
-      {#each polygons as poly}
-        <li style="list-style: none; margin-bottom: 0.25em;">
+      {#each polygons as poly, i (poly.id)}
+        <li
+          style="list-style: none; margin-bottom: 0.25em;"
+          bind:this={terrainListItems[i]}
+        >
           <button
             type="button"
             style="cursor:pointer; text-decoration:underline; border:none; background:none; padding:0; font:inherit; {selectedPolygonId ===
