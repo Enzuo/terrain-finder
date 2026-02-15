@@ -174,6 +174,11 @@
   <div style="margin-bottom: 1em;">
     <strong>Matching terrains:</strong>
     {polygons.length}
+    {#if selectedPolygonId}
+      {#if polygons.length}
+        &nbsp;|&nbsp;Selected: {polygons.findIndex(p => p.id === selectedPolygonId) + 1} / {polygons.length}
+      {/if}
+    {/if}
   </div>
   <div style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;">
     <strong>All terrains (sorted by closest size):</strong>
