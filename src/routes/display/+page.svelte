@@ -1,11 +1,15 @@
 <script>
   import { onMount } from 'svelte';
   import { loadTerrainData } from '$lib/terrainDb.js';
+  import { loadCommunesMap } from '$lib/communes'
   let data = null;
   let error = '';
+  let currentFileKey = null;
+  let communesMap = null;
   onMount(async () => {
     try {
-      const stored = await loadTerrainData('terrainData');
+      currentFileKey = localStorage.getItem('currentFile')
+      const stored = await loadTerrainData(currentFileKey)
       if (stored) {
         data = stored;
       } else {
@@ -14,11 +18,15 @@
     } catch (e) {
       error = 'Failed to load parsed data.';
     }
+    communesMap = await loadCommunesMap(); // Preload communes map for later use
   });
 </script>
 
 <main style="max-width: 700px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #fff;">
-  <h1>Parsed JSON Data</h1>
+  <h1>Parsed JSON Data {currentFileKey}</h1>
+  {#if communesMap && communesMap.get(currentFileKey)}
+    <span style="margin-left: 0.5em; color: #333;">({communesMap.get(currentFileKey)})</span>
+  {/if}
   {#if error}
     <p style="color: red;">{error}</p>
   {:else if data}
