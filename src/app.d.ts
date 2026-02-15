@@ -7,6 +7,17 @@ declare global {
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
+		interface TerrainData {
+			features : [{
+				geometry : {
+					type : string,
+					coordinates : number[][][]
+				},
+				properties : {
+					contenance : number
+				}
+			}]
+		}
 	}
 }
 
