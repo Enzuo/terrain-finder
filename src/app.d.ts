@@ -8,15 +8,18 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 		interface TerrainData {
-			features : [{
-				geometry : {
-					type : string,
-					coordinates : number[][][]
-				},
-				properties : {
-					contenance : number
-				}
-			}]
+				features : TerrainFeature[]
+		}
+		interface TerrainFeature {
+			id : string,
+			geometry: {
+				type: string,
+				coordinates: number[][][]
+			},
+			properties: {
+				contenance: number
+				numero: number
+			}
 		}
 	}
 }

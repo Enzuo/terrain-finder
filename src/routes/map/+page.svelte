@@ -8,6 +8,7 @@
   let error = ''
   let terrainSize = 0
   let terrainMargin = 0
+  /** @type {App.TerrainFeature[]} */
   let polygons = []
   let polygonLayers = []
   /** @type {App.TerrainData | null} */
@@ -49,6 +50,9 @@
       && f.properties.contenance >= terrainSize - terrainMargin
       && f.properties.contenance <= terrainSize + terrainMargin
     )
+    // Sorted list filtered polygons by distance to terrainSize
+    polygons = polygons.sort((a, b) => Math.abs(a.properties.contenance - terrainSize) - Math.abs(b.properties.contenance - terrainSize));
+
     polygons.forEach((feature) => {
       if (feature.geometry && feature.geometry.type === 'Polygon') {
         // Leaflet expects [lat, lng], but GeoJSON is [lng, lat]
@@ -93,10 +97,18 @@
     />
   </div>
   <div style="margin-bottom: 1em;">
-    <strong>Matching terrains:</strong>
-    {polygons.length}
+    <strong>Matching terrains:</strong> {polygons.length}
   </div>
-  <p>This is the sidebar content. Add map controls or info here.</p>
+  <div style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;">
+    <strong>All terrains (sorted by closest size):</strong>
+    <ul style="margin: 0; padding-left: 1em;">
+      {#each polygons as poly}
+        <li>
+          {poly.id} — {poly.properties.contenance} m2 - {poly.properties.numero}
+        </li>
+      {/each}
+    </ul>
+  </div>
 </CollapsibleSidebar>
 
 <div class="map-root">
