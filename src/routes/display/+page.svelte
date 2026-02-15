@@ -1,12 +1,13 @@
 <script>
   import { onMount } from 'svelte';
+  import { loadTerrainData } from '$lib/terrainDb.js';
   let data = null;
   let error = '';
-  onMount(() => {
+  onMount(async () => {
     try {
-      const stored = sessionStorage.getItem('terrainData');
+      const stored = await loadTerrainData('terrainData');
       if (stored) {
-        data = JSON.parse(stored);
+        data = stored;
       } else {
         error = 'No parsed data found. Please upload a file first.';
       }

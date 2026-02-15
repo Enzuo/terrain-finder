@@ -16,21 +16,23 @@
   /** @type {App.TerrainData | null} */
   let terrainData = null // TerrainData
 
-  function loadTerrainData() {
+
+  import { loadTerrainData } from '$lib/terrainDb.js';
+  async function loadTerrainDataFromDb() {
     try {
-      const stored = sessionStorage.getItem('terrainData')
+      const stored = await loadTerrainData('terrainData');
       if (stored) {
-        terrainData = JSON.parse(stored)
+        terrainData = stored;
       } else {
-        terrainData = null
+        terrainData = null;
       }
     } catch (e) {
-      terrainData = null
+      terrainData = null;
     }
   }
 
   onMount(async () => {
-    loadTerrainData()
+    await loadTerrainDataFromDb()
     try {
       map = L.map(mapContainer).setView([46.3105761, 0.1725793], 13)
       const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
