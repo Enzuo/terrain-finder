@@ -1,6 +1,6 @@
 <script>
-  export let title = 'Sidebar';
-  let open = false;
+  export let title = 'Menu';
+  let open = true;
   function toggle() {
     open = !open;
   }
@@ -54,7 +54,7 @@
 </style>
 
 <button class="toggle-btn" on:click={toggle} aria-label="Toggle sidebar">
-  {#if open}Close Sidebar{:else}Open Sidebar{/if}
+  {#if open}Close{:else}Open{/if}
 </button>
 
 <aside class="sidebar {open ? 'open' : ''}">
