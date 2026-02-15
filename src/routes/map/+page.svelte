@@ -7,6 +7,7 @@
   let leafletLoaded = false
   let error = ''
   let terrainSize = 0
+  let terrainMargin = 0
   let polygons = []
   let polygonLayers = []
   /** @type {App.TerrainData | null} */
@@ -44,13 +45,14 @@
     polygonLayers = []
     // Filter polygons by contenance
     polygons = terrainData.features.filter(
-      (f) => f.properties && f.properties.contenance == terrainSize
+      (f) => f.properties 
+      && f.properties.contenance >= terrainSize - terrainMargin
+      && f.properties.contenance <= terrainSize + terrainMargin
     )
     polygons.forEach((feature) => {
       if (feature.geometry && feature.geometry.type === 'Polygon') {
         // Leaflet expects [lat, lng], but GeoJSON is [lng, lat]
         const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])
-        console.log('coords', coords)
         const layer = L.polygon(coords, { color: 'red', weight: 2, fillOpacity: 0.3 })
         layer.addTo(map)
         polygonLayers.push(layer)
@@ -66,12 +68,25 @@
 <CollapsibleSidebar title="Map Controls">
   <div style="margin-bottom: 1.5em;">
     <label for="filter-number" style="font-weight: bold; display: block; margin-bottom: 0.5em;"
-      >Filter Number</label
+      >Terrain Size</label
     >
     <input
       id="filter-number"
       type="number"
       bind:value={terrainSize}
+      min="0"
+      style="width: 100%; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem;"
+      placeholder="Enter a number..."
+    />
+  </div>
+  <div style="margin-bottom: 1.5em;">
+    <label for="filter-number" style="font-weight: bold; display: block; margin-bottom: 0.5em;"
+      >Terrain Margin</label
+    >
+    <input
+      id="filter-number"
+      type="number"
+      bind:value={terrainMargin}
       min="0"
       style="width: 100%; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem;"
       placeholder="Enter a number..."
