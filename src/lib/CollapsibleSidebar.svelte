@@ -12,7 +12,8 @@
   top: 0;
   right: 0;
   height: 100vh;
-  width: 400px;
+  width: 30%;
+  min-width:200px;
   background: #fff;
   box-shadow: -2px 0 8px rgba(0,0,0,0.08);
   transform: translateX(100%);
