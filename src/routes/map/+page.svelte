@@ -102,6 +102,10 @@
   }
 
   // Center the map on the selected polygon
+  /**
+   * Center the map on the given polygon feature and copy its first coordinate to clipboard
+   * @param {App.TerrainFeature} feature
+   */
   function centerOnPolygon(feature) {
     if (!map || !feature.geometry || feature.geometry.type !== 'Polygon') return
     selectedPolygonId = feature.id
