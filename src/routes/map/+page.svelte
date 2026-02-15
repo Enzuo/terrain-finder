@@ -10,6 +10,7 @@
   let terrainMargin = 0
   /** @type {App.TerrainFeature[]} */
   let polygons = []
+  let selectedPolygonId = null;
   let polygonLayers = []
   /** @type {App.TerrainData | null} */
   let terrainData = null // TerrainData
@@ -46,22 +47,41 @@
     polygonLayers = []
     // Filter polygons by contenance
     polygons = terrainData.features.filter(
-      (f) => f.properties 
-      && f.properties.contenance >= terrainSize - terrainMargin
-      && f.properties.contenance <= terrainSize + terrainMargin
+      (f) =>
+        f.properties &&
+        f.properties.contenance >= terrainSize - terrainMargin &&
+        f.properties.contenance <= terrainSize + terrainMargin
     )
     // Sorted list filtered polygons by distance to terrainSize
-    polygons = polygons.sort((a, b) => Math.abs(a.properties.contenance - terrainSize) - Math.abs(b.properties.contenance - terrainSize));
+    polygons = polygons.sort(
+      (a, b) =>
+        Math.abs(a.properties.contenance - terrainSize) -
+        Math.abs(b.properties.contenance - terrainSize)
+    )
 
     polygons.forEach((feature) => {
       if (feature.geometry && feature.geometry.type === 'Polygon') {
         // Leaflet expects [lat, lng], but GeoJSON is [lng, lat]
         const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])
-        const layer = L.polygon(coords, { color: 'red', weight: 2, fillOpacity: 0.3 })
-        layer.addTo(map)
-        polygonLayers.push(layer)
+        const isSelected = feature.id === selectedPolygonId;
+        const layer = L.polygon(coords, {
+          color: isSelected ? 'blue' : 'red',
+          weight: isSelected ? 4 : 2,
+          fillOpacity: isSelected ? 0.5 : 0.3
+        });
+        layer.addTo(map);
+        polygonLayers.push(layer);
       }
-    })
+    });
+  }
+
+  // Center the map on the selected polygon
+  function centerOnPolygon(feature) {
+    if (!map || !feature.geometry || feature.geometry.type !== 'Polygon') return;
+    selectedPolygonId = feature.id;
+    const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
+    const bounds = L.latLngBounds(coords);
+    map.fitBounds(bounds, { maxZoom: 18, animate: true });
   }
 </script>
 
@@ -97,13 +117,17 @@
     />
   </div>
   <div style="margin-bottom: 1em;">
-    <strong>Matching terrains:</strong> {polygons.length}
+    <strong>Matching terrains:</strong>
+    {polygons.length}
   </div>
   <div style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;">
     <strong>All terrains (sorted by closest size):</strong>
     <ul style="margin: 0; padding-left: 1em;">
       {#each polygons as poly}
-        <li>
+        <li
+          style="cursor:pointer; text-decoration:underline; {selectedPolygonId === poly.id ? 'background:#e0f0ff; color:#0057b8; font-weight:bold;' : 'color:#0077ff;'}"
+          on:click={() => centerOnPolygon(poly)}
+        >
           {poly.id} — {poly.properties.contenance} m2 - {poly.properties.numero}
         </li>
       {/each}
