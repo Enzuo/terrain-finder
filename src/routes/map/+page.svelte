@@ -4,7 +4,6 @@
   import CollapsibleSidebar from '$lib/CollapsibleSidebar.svelte'
   let map
   let mapContainer
-  let leafletLoaded = false
   let error = ''
   let terrainSize = 0
   let terrainMargin = 0
@@ -16,18 +15,17 @@
   /** @type {App.TerrainData | null} */
   let terrainData = null // TerrainData
 
-
-  import { loadTerrainData } from '$lib/terrainDb.js';
+  import { loadTerrainData } from '$lib/terrainDb.js'
   async function loadTerrainDataFromDb() {
     try {
-      const stored = await loadTerrainData('terrainData');
+      const stored = await loadTerrainData('terrainData')
       if (stored) {
-        terrainData = stored;
+        terrainData = stored
       } else {
-        terrainData = null;
+        terrainData = null
       }
     } catch (e) {
-      terrainData = null;
+      terrainData = null
     }
   }
 
@@ -37,16 +35,20 @@
       map = L.map(mapContainer).setView([46.3105761, 0.1725793], 13)
       const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-      });
-      const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-      });
+      })
+      const esriSat = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution:
+            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }
+      )
       const baseMaps = {
-        "OpenStreetMap": osm,
-        "Satellite (Esri)": esriSat
-      };
-      osm.addTo(map);
-      L.control.layers(baseMaps, undefined, { position: 'bottomleft' }).addTo(map);
+        OpenStreetMap: osm,
+        'Satellite (Esri)': esriSat
+      }
+      osm.addTo(map)
+      L.control.layers(baseMaps, undefined, { position: 'bottomleft' }).addTo(map)
     } catch (e) {
       error = 'Failed to load Leaflet: ' + e.message
     }
@@ -99,6 +101,16 @@
     const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])
     const bounds = L.latLngBounds(coords)
     map.fitBounds(bounds, { maxZoom: 18, animate: true })
+    // Copy only the first coordinate pair (lat, lng) to clipboard
+    try {
+      const coordinates = coords[0]
+      console.log('Copying coordinates to clipboard:', coordinates)
+      if (coordinates) {
+        navigator.clipboard.writeText(`${coordinates[0]}, ${coordinates[1]}`)
+      }
+    } catch (e) {
+      // Optionally handle clipboard error
+    }
   }
 
   // Keyboard navigation for terrain list
@@ -113,6 +125,7 @@
         currentPolygonIndex = 0
       }
       selectedPolygonId = polygons[currentPolygonIndex].id
+      centerOnPolygon(polygons[currentPolygonIndex])
     } else if (event.key === 'ArrowUp') {
       var currentPolygonIndex = polygons.findIndex((p) => p.id === selectedPolygonId)
       event.preventDefault()
@@ -122,6 +135,7 @@
         currentPolygonIndex = polygons.length - 1
       }
       selectedPolygonId = polygons[currentPolygonIndex].id
+      centerOnPolygon(polygons[currentPolygonIndex])
     }
   }
 </script>
