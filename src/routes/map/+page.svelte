@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import L from 'leaflet'
+  import { createLeafletMap } from '$lib/leafletMap.js'
   import CollapsibleSidebar from '$lib/CollapsibleSidebar.svelte'
   import TerrainSearchForm from '$lib/TerrainSearchForm.svelte'
   import TerrainList from '$lib/TerrainList.svelte'
@@ -9,51 +9,31 @@
 
   /** @type {App.TerrainData|null} */
   let terrainData
-  let map
-  let mapContainer
+  let map = null
+  /** @type {HTMLElement | null} */
+  let mapContainer = null
   let error = ''
   let terrainSize = 0
   let terrainMargin = 0
   /** @type {App.TerrainFeature[]} */
-  let polygons = []
+  let terrains = []
   /** @type {string|null} */
-  let selectedPolygonId = null
-  let polygonLayers = []
+  let selectedTerrainId = null
+
+  /** @type {string | null} */
   let currentFileKey = null
 
-  onMount(async () => {
+  onMount(() => {
     currentFileKey = localStorage.getItem('currentFile')
-    console.log('Attempting to load terrain data for current file...', currentFileKey)
-    const stored = await loadTerrainData(currentFileKey)
-    terrainData = stored || null
+    loadTerrainData(currentFileKey || '').then(data => {
+      terrainData = data
 
-    var defaultView =
-      terrainData && terrainData.features.length
-        ? terrainData.features[0].geometry.coordinates[0][0].reverse()
-        : [46.3105761, 0.1725793]
-    try {
-      map = L.map(mapContainer, { maxZoom: 19 }).setView(defaultView, 12)
-      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-      })
-      const esriSat = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        {
-          attribution:
-            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-          maxZoom: 19
-        }
-      )
-      const baseMaps = {
-        OpenStreetMap: osm,
-        'Satellite (Esri)': esriSat
-      }
-      osm.addTo(map)
-      L.control.layers(baseMaps, undefined, { position: 'bottomleft' }).addTo(map)
-    } catch (e) {
-      error = 'Failed to load Leaflet: ' + e.message
-    }
+      var defaultView =
+        terrainData && terrainData.features && terrainData.features.length
+          ? terrainData.features[0].geometry.coordinates[0][0].reverse()
+          : [46.3105761, 0.1725793]
+        map = createLeafletMap(mapContainer, defaultView, 12)
+    })
 
     window.addEventListener('keydown', handleKeyDown)
     return () => {
@@ -61,79 +41,45 @@
     }
   })
 
-  // Watch for terrainSize changes and update polygons
-  $: if (map && terrainSize) {
-    if (!terrainData) {
-      console.warn('No terrain data available to filter polygons.')
-    }
-    // Remove previous polygons
-    polygonLayers.forEach((layer) => map.removeLayer(layer))
-    polygonLayers = []
-    // Use filtering logic from +page.js
-    polygons = filterAndSortPolygons(terrainData, terrainSize, terrainMargin)
-
-    polygons.forEach((feature) => {
-      if (feature.geometry && feature.geometry.type === 'Polygon') {
-        // Leaflet expects [lat, lng], but GeoJSON is [lng, lat]
-        const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])
-        const isSelected = feature.id === selectedPolygonId
-        const layer = L.polygon(coords, {
-          color: isSelected ? 'blue' : 'red',
-          weight: isSelected ? 4 : 2,
-          fillOpacity: isSelected ? 0.5 : 0.3
-        })
-        layer.addTo(map)
-        polygonLayers.push(layer)
-      }
-    })
+  // Watch for terrainSize changes and update map
+  $: if (map && terrainSize && terrainData) {
+    terrains = filterAndSortPolygons(terrainData, terrainSize, terrainMargin)
+    map.displayPolygons(terrains, selectedTerrainId)
   }
 
-  // Center the map on the selected polygon
   /**
    * Center the map on the given polygon feature and copy its first coordinate to clipboard
    * @param {App.TerrainFeature} feature
    */
-  function centerOnPolygon(feature) {
-    if (!map || !feature.geometry || feature.geometry.type !== 'Polygon') return
-    selectedPolygonId = feature.id
-    const coords = feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng])
-    const bounds = L.latLngBounds(coords)
-    map.fitBounds(bounds, { maxZoom: 19, animate: true })
-    // Copy only the first coordinate pair (lat, lng) to clipboard
-    try {
-      const coordinates = coords[0]
-      console.log('Copying coordinates to clipboard:', coordinates)
-      if (coordinates) {
-        navigator.clipboard.writeText(`${coordinates[0]}, ${coordinates[1]}`)
-      }
-    } catch (e) {
-      // Optionally handle clipboard error
-    }
+  function selectTerrain(feature) {
+    if (!map) return
+    selectedTerrainId = feature.id
+    map.centerOnTerrain(selectedTerrainId)
   }
 
-  // Keyboard navigation for terrain list
+  /**
+   * @param {KeyboardEvent} event
+   */
   function handleKeyDown(event) {
-    if (!polygons.length) return
+    if (!terrains.length) return
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      var currentPolygonIndex = polygons.findIndex((p) => p.id === selectedPolygonId)
-      if (currentPolygonIndex < polygons.length - 1) {
+      var currentPolygonIndex = terrains.findIndex((p) => p.id === selectedTerrainId)
+      if (currentPolygonIndex < terrains.length - 1) {
         currentPolygonIndex++
       } else {
         currentPolygonIndex = 0
       }
-      selectedPolygonId = polygons[currentPolygonIndex].id
-      centerOnPolygon(polygons[currentPolygonIndex])
+      selectTerrain(terrains[currentPolygonIndex])
     } else if (event.key === 'ArrowUp') {
-      var currentPolygonIndex = polygons.findIndex((p) => p.id === selectedPolygonId)
+      var currentPolygonIndex = terrains.findIndex((p) => p.id === selectedTerrainId)
       event.preventDefault()
       if (currentPolygonIndex > 0) {
         currentPolygonIndex--
       } else {
-        currentPolygonIndex = polygons.length - 1
+        currentPolygonIndex = terrains.length - 1
       }
-      selectedPolygonId = polygons[currentPolygonIndex].id
-      centerOnPolygon(polygons[currentPolygonIndex])
+      selectTerrain(terrains[currentPolygonIndex])
     }
   }
 
@@ -143,8 +89,8 @@
   let terrainListItems = []
 
   $: {
-    if (selectedPolygonId && polygons.length && terrainListItems.length) {
-      const idx = polygons.findIndex((p) => p.id === selectedPolygonId)
+    if (selectedTerrainId && terrains.length && terrainListItems.length) {
+      const idx = terrains.findIndex((p) => p.id === selectedTerrainId)
       if (idx !== -1 && terrainListItems[idx]) {
         terrainListItems[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' })
       }
@@ -162,9 +108,9 @@
     bind:terrainMargin={terrainMargin}
   />
   <TerrainList
-    {polygons}
-    selectedTerrainId={selectedPolygonId}
-    onTerrainClick={centerOnPolygon}
+    {terrains}
+    selectedTerrainId={selectedTerrainId}
+    onTerrainClick={selectTerrain}
     {terrainListContainer}
     {terrainListItems}
   />

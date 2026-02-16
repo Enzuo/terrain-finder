@@ -1,6 +1,6 @@
 <script>
   /** @type {App.TerrainFeature[]} */
-  export let polygons = [];
+  export let terrains = [];
   /** @type {string|null} */
   export let selectedTerrainId = null;
   /** @type {(terrain: App.TerrainFeature) => void} */
@@ -11,10 +11,10 @@
 
 <div style="margin-bottom: 1em;">
   <strong>Matching terrains:</strong>
-  {polygons.length}
+  {terrains.length}
   {#if selectedTerrainId}
-    {#if polygons.length}
-      &nbsp;|&nbsp;Selected: {polygons.findIndex((p) => p.id === selectedTerrainId) + 1} / {polygons.length}
+    {#if terrains.length}
+      &nbsp;|&nbsp;Selected: {terrains.findIndex((p) => p.id === selectedTerrainId) + 1} / {terrains.length}
     {/if}
   {/if}
 </div>
@@ -24,7 +24,7 @@
 >
   <strong>All terrains (sorted by closest size):</strong>
   <ul style="margin: 0; padding-left: 1em;">
-    {#each polygons as poly, i (poly.id)}
+    {#each terrains as poly, i (poly.id)}
       <li style="list-style: none; margin-bottom: 0.25em;" bind:this={terrainListItems[i]}>
         <button
           type="button"
