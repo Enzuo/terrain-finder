@@ -6,6 +6,7 @@
   import TerrainList from '$lib/TerrainList.svelte'
   import { filterAndSortPolygons } from '$lib/terrainUtils.js'
   import { loadTerrainData } from '$lib/terrainDb.js'
+  import { debounce } from '$lib/utils'
 
   /** @type {App.TerrainData|null} */
   let terrainData
@@ -43,10 +44,14 @@
   })
 
   // Watch for terrainSize changes and update map
-  $: if (map && terrainSize && terrainData) {
-    terrains = filterAndSortPolygons(terrainData, terrainSize, terrainMargin)
-    map.displayPolygons(terrains, selectedTerrainId)
-  }
+  $: updateTerrains(terrainData, terrainSize, terrainMargin)
+
+  const updateTerrains = debounce((terrainData, terrainSize, terrainMargin) => {
+    if (map && terrainData) {
+      terrains = filterAndSortPolygons(terrainData, terrainSize, terrainMargin)
+      map.displayPolygons(terrains, selectedTerrainId)
+    }
+  }, 500)
 
   /**
    * Center the map on the given polygon feature and copy its first coordinate to clipboard
