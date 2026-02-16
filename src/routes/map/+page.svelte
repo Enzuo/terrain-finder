@@ -2,6 +2,8 @@
   import { onMount } from 'svelte'
   import L from 'leaflet'
   import CollapsibleSidebar from '$lib/CollapsibleSidebar.svelte'
+  import TerrainSearchForm from '$lib/TerrainSearchForm.svelte'
+  import TerrainList from '$lib/TerrainList.svelte'
   import { filterAndSortPolygons } from '$lib/terrainUtils.js'
   import { loadTerrainData } from '$lib/terrainDb.js'
 
@@ -155,63 +157,18 @@
 </svelte:head>
 
 <CollapsibleSidebar title="Map {currentFileKey}">
-  <div style="margin-bottom: 1.5em;">
-    <label for="filter-number" style="font-weight: bold; display: block; margin-bottom: 0.5em;"
-      >Terrain Size</label
-    >
-    <input
-      id="filter-number"
-      type="number"
-      bind:value={terrainSize}
-      min="0"
-      style="width: 100%; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem;"
-      placeholder="Enter a number..."
-    />
-  </div>
-  <div style="margin-bottom: 1.5em;">
-    <label for="filter-number" style="font-weight: bold; display: block; margin-bottom: 0.5em;"
-      >Terrain Margin</label
-    >
-    <input
-      id="filter-number"
-      type="number"
-      bind:value={terrainMargin}
-      min="0"
-      style="width: 100%; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem;"
-      placeholder="Enter a number..."
-    />
-  </div>
-  <div style="margin-bottom: 1em;">
-    <strong>Matching terrains:</strong>
-    {polygons.length}
-    {#if selectedPolygonId}
-      {#if polygons.length}
-        &nbsp;|&nbsp;Selected: {polygons.findIndex((p) => p.id === selectedPolygonId) + 1} / {polygons.length}
-      {/if}
-    {/if}
-  </div>
-  <div
-    style="margin-bottom: 1em; max-height: 200px; overflow-y: auto;"
-    bind:this={terrainListContainer}
-  >
-    <strong>All terrains (sorted by closest size):</strong>
-    <ul style="margin: 0; padding-left: 1em;">
-      {#each polygons as poly, i (poly.id)}
-        <li style="list-style: none; margin-bottom: 0.25em;" bind:this={terrainListItems[i]}>
-          <button
-            type="button"
-            style="cursor:pointer; text-decoration:underline; border:none; background:none; padding:0; font:inherit; {selectedPolygonId ===
-            poly.id
-              ? 'background:#e0f0ff; color:#0057b8; font-weight:bold;'
-              : 'color:#0077ff;'}"
-            on:click={() => centerOnPolygon(poly)}
-          >
-            {poly.id} — {poly.properties.contenance} m2 - {poly.properties.numero}
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </div>
+  <TerrainSearchForm
+    bind:terrainSize={terrainSize}
+    bind:terrainMargin={terrainMargin}
+  />
+  <TerrainList
+    {polygons}
+    selectedTerrainId={selectedPolygonId}
+    onTerrainClick={centerOnPolygon}
+    {terrainListContainer}
+    {terrainListItems}
+  />
+  {terrainSize}
 </CollapsibleSidebar>
 
 <div class="map-root">
