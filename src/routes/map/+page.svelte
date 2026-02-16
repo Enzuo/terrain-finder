@@ -9,9 +9,10 @@
 
   /** @type {App.TerrainData|null} */
   let terrainData
+  /** @type {ReturnType<typeof createLeafletMap>|null} */
   let map = null
-  /** @type {HTMLElement | null} */
-  let mapContainer = null
+  /** @type {HTMLElement} */
+  let mapContainer
   let error = ''
   let terrainSize = 0
   let terrainMargin = 0
@@ -25,14 +26,14 @@
 
   onMount(() => {
     currentFileKey = localStorage.getItem('currentFile')
-    loadTerrainData(currentFileKey || '').then(data => {
+    loadTerrainData(currentFileKey || '').then((data) => {
       terrainData = data
 
       var defaultView =
         terrainData && terrainData.features && terrainData.features.length
           ? terrainData.features[0].geometry.coordinates[0][0].reverse()
           : [46.3105761, 0.1725793]
-        map = createLeafletMap(mapContainer, defaultView, 12)
+      map = createLeafletMap(mapContainer, defaultView, 12)
     })
 
     window.addEventListener('keydown', handleKeyDown)
@@ -62,25 +63,16 @@
    */
   function handleKeyDown(event) {
     if (!terrains.length) return
+    const idx = terrains.findIndex((p) => p.id === selectedTerrainId)
+    let nextIdx = idx
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      var currentPolygonIndex = terrains.findIndex((p) => p.id === selectedTerrainId)
-      if (currentPolygonIndex < terrains.length - 1) {
-        currentPolygonIndex++
-      } else {
-        currentPolygonIndex = 0
-      }
-      selectTerrain(terrains[currentPolygonIndex])
+      nextIdx = (idx + 1) % terrains.length
     } else if (event.key === 'ArrowUp') {
-      var currentPolygonIndex = terrains.findIndex((p) => p.id === selectedTerrainId)
       event.preventDefault()
-      if (currentPolygonIndex > 0) {
-        currentPolygonIndex--
-      } else {
-        currentPolygonIndex = terrains.length - 1
-      }
-      selectTerrain(terrains[currentPolygonIndex])
+      nextIdx = (idx - 1 + terrains.length) % terrains.length
     }
+    if (nextIdx !== idx) selectTerrain(terrains[nextIdx])
   }
 
   // For scrolling selected polygon into view
@@ -103,13 +95,10 @@
 </svelte:head>
 
 <CollapsibleSidebar title="Map {currentFileKey}">
-  <TerrainSearchForm
-    bind:terrainSize={terrainSize}
-    bind:terrainMargin={terrainMargin}
-  />
+  <TerrainSearchForm bind:terrainSize bind:terrainMargin />
   <TerrainList
     {terrains}
-    selectedTerrainId={selectedTerrainId}
+    {selectedTerrainId}
     onTerrainClick={selectTerrain}
     {terrainListContainer}
     {terrainListItems}
