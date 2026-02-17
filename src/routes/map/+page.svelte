@@ -1,9 +1,9 @@
 <script>
   import { onMount } from 'svelte'
   import { createLeafletMap } from '$lib/leafletMap.js'
-  import CollapsibleSidebar from '$lib/CollapsibleSidebar.svelte'
-  import TerrainSearchForm from '$lib/TerrainSearchForm.svelte'
-  import TerrainList from '$lib/TerrainList.svelte'
+  import CollapsibleSidebar from '$lib/components/CollapsibleSidebar.svelte'
+  import TerrainSearchForm from '$lib/components/TerrainSearchForm.svelte'
+  import TerrainList from '$lib/components/TerrainList.svelte'
   import { filterTerrains } from '$lib/terrainUtils.js'
   import { loadTerrainData } from '$lib/terrainDb.js'
   import { debounce } from '$lib/utils'
