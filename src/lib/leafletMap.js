@@ -55,13 +55,12 @@ export function createLeafletMap(mapContainer, defaultView = [46.3105761, 0.1725
   }
 
   /**
-   * @param {App.TerrainFeature[]} terrains
+   * @param {App.TerrainFeature[]} terrainsToDisplay
    * @param {string|null} selectedPolygonId
    */
-  function displayTerrains(terrains, selectedPolygonId) {
+  function displayTerrains(terrainsToDisplay, selectedPolygonId) {
     clean()
-    /** @type {L.Layer[]} */
-    terrains = terrains
+    terrains = terrainsToDisplay
     terrains.forEach((feature) => {
       if (feature.geometry && feature.geometry.type === 'Polygon') {
         // Leaflet expects [lat, lng], but GeoJSON is [lng, lat]

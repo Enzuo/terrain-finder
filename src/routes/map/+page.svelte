@@ -4,7 +4,7 @@
   import CollapsibleSidebar from '$lib/components/CollapsibleSidebar.svelte'
   import TerrainSearchForm from '$lib/components/TerrainSearchForm.svelte'
   import TerrainList from '$lib/components/TerrainList.svelte'
-  import { filterTerrains } from '$lib/terrainUtils.js'
+  import { filterTerrains, filterTerrainsWithCombinator } from '$lib/terrainUtils.js'
   import { loadTerrainData } from '$lib/terrainDb.js'
   import { debounce } from '$lib/utils'
 
@@ -21,6 +21,9 @@
   let terrains = []
   /** @type {string|null} */
   let selectedTerrainId = null
+  let isUsingTerrainCombinator = false
+  let terrainCombinatorMax = 2
+  let terrainCombinatorDepth = 2
 
   /** @type {string | null} */
   let currentFileKey = null
@@ -29,10 +32,10 @@
     currentFileKey = localStorage.getItem('currentFile')
     loadTerrainData(currentFileKey || '').then((data) => {
       terrainData = data
-
+      console.log('Loaded terrain data:', JSON.stringify(terrainData, null, 2))
       var defaultView =
         terrainData && terrainData.features && terrainData.features.length
-          ? terrainData.features[0].geometry.coordinates[0][0].reverse()
+          ? terrainData.features[0].geometry.coordinates[0][0].toReversed()
           : [46.3105761, 0.1725793]
       map = createLeafletMap(mapContainer, defaultView, 12)
     })
@@ -48,8 +51,13 @@
 
   const updateTerrains = debounce((terrainData, terrainSize, terrainMargin) => {
     if (map && terrainData) {
-      terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
-      map.displayTerrains(terrains, selectedTerrainId)
+      if(isUsingTerrainCombinator) {
+        terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
+      } else {
+        terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
+      }
+      // map.displayTerrains(terrains, selectedTerrainId)
+      map.displayTerrains(terrainData.features, selectedTerrainId) // todo disp all terrains
     }
   }, 500)
 
@@ -60,6 +68,7 @@
   function selectTerrain(feature) {
     if (!map) return
     selectedTerrainId = feature.id
+    map.displayTerrains(terrains, selectedTerrainId)
     map.centerOnTerrain(selectedTerrainId)
   }
 
@@ -100,7 +109,13 @@
 </svelte:head>
 
 <CollapsibleSidebar title="Map {currentFileKey}">
-  <TerrainSearchForm bind:terrainSize bind:terrainMargin />
+  <TerrainSearchForm 
+    bind:terrainSize 
+    bind:terrainMargin 
+    bind:isUsingTerrainCombinator 
+    bind:terrainCombinatorMax 
+    bind:terrainCombinatorDepth
+  />
   <TerrainList
     {terrains}
     {selectedTerrainId}
