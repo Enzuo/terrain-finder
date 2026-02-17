@@ -4,7 +4,7 @@
   import CollapsibleSidebar from '$lib/CollapsibleSidebar.svelte'
   import TerrainSearchForm from '$lib/TerrainSearchForm.svelte'
   import TerrainList from '$lib/TerrainList.svelte'
-  import { filterAndSortPolygons } from '$lib/terrainUtils.js'
+  import { filterTerrains } from '$lib/terrainUtils.js'
   import { loadTerrainData } from '$lib/terrainDb.js'
   import { debounce } from '$lib/utils'
 
@@ -48,8 +48,8 @@
 
   const updateTerrains = debounce((terrainData, terrainSize, terrainMargin) => {
     if (map && terrainData) {
-      terrains = filterAndSortPolygons(terrainData, terrainSize, terrainMargin)
-      map.displayPolygons(terrains, selectedTerrainId)
+      terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
+      map.displayTerrains(terrains, selectedTerrainId)
     }
   }, 500)
 

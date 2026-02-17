@@ -6,7 +6,7 @@
  * @param {number} terrainMargin
  * @returns {App.TerrainFeature[]}
  */
-export function filterAndSortPolygons(terrainData, terrainSize, terrainMargin) {
+export function filterTerrains(terrainData, terrainSize, terrainMargin) {
   if (!terrainData || !terrainData.features) return [];
   let filtered = terrainData.features.filter(
     (f) =>

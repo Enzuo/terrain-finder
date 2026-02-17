@@ -19,7 +19,7 @@ export function createLeafletMap(mapContainer, defaultView = [46.3105761, 0.1725
   return {
     map,
     clean,
-    displayPolygons,
+    displayTerrains,
     centerOnTerrain
   }
 
@@ -55,14 +55,14 @@ export function createLeafletMap(mapContainer, defaultView = [46.3105761, 0.1725
   }
 
   /**
-   * @param {App.TerrainFeature[]} polygons
+   * @param {App.TerrainFeature[]} terrains
    * @param {string|null} selectedPolygonId
    */
-  function displayPolygons(polygons, selectedPolygonId) {
+  function displayTerrains(terrains, selectedPolygonId) {
     clean()
     /** @type {L.Layer[]} */
-    terrains = polygons
-    polygons.forEach((feature) => {
+    terrains = terrains
+    terrains.forEach((feature) => {
       if (feature.geometry && feature.geometry.type === 'Polygon') {
         // Leaflet expects [lat, lng], but GeoJSON is [lng, lat]
         // Ensure each coordinate is [lat, lng] and has exactly 2 elements
