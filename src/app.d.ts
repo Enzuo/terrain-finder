@@ -14,7 +14,7 @@ declare global {
 			id : string,
 			geometry: {
 				type: string,
-				coordinates: number[][][]
+				coordinates: [[[number, number]]]
 			},
 			properties: {
 				contenance: number

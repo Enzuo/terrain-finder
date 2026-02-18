@@ -30,10 +30,21 @@ export function filterTerrains(terrainData, terrainSize, terrainMargin) {
  * @param {number} combinatorDepth 
  */
 export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, combinatorMax, combinatorDepth) {
-  for (let i = 0; i < terrainData.features.length - 1; i++) {
-    let terrain = terrainData.features[i]
-    findAdjacentTerrains(terrain, terrainData)
+  var terrainmaxSize = terrainSize + terrainMargin
+  var terrainminSize = terrainSize - terrainMargin
+  var terrainsPool = terrainData.features.filter(f => f.properties.contenance < terrainmaxSize)
+
+  for (let terrain of terrainsPool) {
+
+    let adjTerrains = findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, 1, combinatorDepth)
+    console.log('Adjacent terrains for terrain', terrain.id, 'found:', adjTerrains)
+    
+    // Fitler duplicates
+
+    // Try out terrains combinations
   }
+
+
 
   return []
 }
@@ -41,15 +52,40 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
 /**
  * 
  * @param {App.TerrainFeature} terrain 
- * @param {App.TerrainData} terrainData 
+ * @param {App.TerrainFeature[]} terrainsPool
+ * @param {number} terrainmaxSize
+ * @param {number} depth
+ * @param {number} maxDepth
+ * 
+ * @returns {App.TerrainFeature[]} 
  */
-function findAdjacentTerrains(terrain, terrainData) {
-  terrainData.features.forEach((other) => {
-    if (other.id === terrain.id) return
-    if (areGeometriesEdgeAdjacent(terrain.geometry.coordinates[0], other.geometry.coordinates[0])) {
-      console.log('Found adjacent terrains:', terrain.id, other.id)
+function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxDepth = 2, totalContenance = terrain.properties.contenance) {
+  if(depth > maxDepth) {
+    return []
+  }
+
+  terrainsPool = terrainsPool.filter(t => 
+    t.id !== terrain.id 
+    && t.properties.contenance + totalContenance <= terrainmaxSize
+  )
+  
+  /** @type {App.TerrainFeature[]} */
+  let adjacentTerrains = []
+  terrainsPool.forEach((otherTerrain) => {
+    // if (otherTerrain.id === terrain.id) return // TODO should not be needed if we remove from pool when we find an adjacent terrain
+    if (areGeometriesEdgeAdjacent(terrain.geometry.coordinates[0], otherTerrain.geometry.coordinates[0])) {
+      console.log('Found adjacent terrain:', terrain.id, otherTerrain.id, depth)
+      let adjacentTerrain = JSON.parse(JSON.stringify(otherTerrain)) // Deep copy to avoid mutating original data
+      adjacentTerrain.depth = depth
+      adjacentTerrain.fromId = terrain.id
+
+      adjacentTerrains.push(adjacentTerrain)
+      let contenanceWithAdjacentTerrain = totalContenance + adjacentTerrain.properties.contenance
+      let adjacentTerrainsRecursive = findAdjacentTerrains(otherTerrain, terrainsPool, terrainmaxSize, depth + 1, maxDepth, contenanceWithAdjacentTerrain)
+      adjacentTerrains = adjacentTerrains.concat(adjacentTerrainsRecursive)
     }
   })
+  return adjacentTerrains
 }
 
 /**
