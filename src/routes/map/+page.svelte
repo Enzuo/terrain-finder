@@ -27,6 +27,7 @@
 
   /** @type {string | null} */
   let currentFileKey = null
+  let filterDuration = 0;
 
   onMount(() => {
     currentFileKey = localStorage.getItem('currentFile')
@@ -51,15 +52,15 @@
 
   const updateTerrains = debounce((terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth) => {
     if (map && terrainData) {
+      const start = performance.now();
       if(isUsingTerrainCombinator) {
         terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
       } else {
         terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
-          // Wrap each terrain in a combination for easier handling in the UI
           .map(t => ({ id: t.id, terrains: [t], totalContenance: t.properties.contenance })) 
       }
       map.displayTerrains(terrains, selectedTerrainId)
-      // map.displayTerrains(terrainData.features, selectedTerrainId) // todo disp all terrains
+      filterDuration = Math.round(performance.now() - start);
     }
   }, 500)
 
@@ -125,7 +126,11 @@
     {terrainListContainer}
     {terrainListItems}
   />
-  {terrainSize}
+  <div class="perf-bar">
+    {#if filterDuration}
+      {filterDuration} ms
+    {/if}
+  </div>
 </CollapsibleSidebar>
 
 <div class="map-root">
@@ -163,5 +168,11 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 10;
+  }
+  .perf-bar {
+    margin-top: 2em;
+    text-align: right;
+    font-size: 0.8em;
+    color: #888;
   }
 </style>
