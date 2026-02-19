@@ -13,14 +13,18 @@ declare global {
 		interface TerrainFeature {
 			id : string,
 			geometry: {
-				type: string,
-				coordinates: [[[number, number]]]
+				type?: string,
+				coordinates: [number, number][][]
 			},
 			properties: {
 				contenance: number
-				numero: number
+				numero?: number
 			}
 		}
+    interface TerrainCombination {
+      terrains: TerrainFeature[],
+      totalContenance: number
+    }
 	}
 }
 
