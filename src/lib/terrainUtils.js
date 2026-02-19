@@ -135,21 +135,31 @@ function tryTerrainCombinations(terrainCombination, terrainsPool, terrainMinSize
     return []
   }
 
+  // should be able to return terrain combination without going to the maxTerrainCount if the totalContenance is already in the desired range (between terrainMinSize and terrainMaxSize)
+  if(terrainCombination.totalContenance >= terrainMinSize && terrainCount > 1) {
+    return [terrainCombination]
+  }
+
   /** @type {App.TerrainCombination[]} */
   let combinations = []
 
   for (let i = 0; i < terrainsPool.length; i++) {
     const otherTerrain = terrainsPool[i]
 
-    // Only adjacent terrains)
+    // Only adjacent terrains to terrain already in the combination can be added to the combination
     if(!terrainCombination.terrains.some(t => t.id === otherTerrain.fromId)) {
+      continue
+    }
+
+    // Only terrains not already in the combination can be added to the combination
+    if(terrainCombination.terrains.some(t => t.id === otherTerrain.id)) {
       continue
     }
 
     const combinedContenance = terrainCombination.totalContenance + otherTerrain.properties.contenance
     if(combinedContenance <= terrainMaxSize) {
       const newCombination = {
-        id: terrainCombination.id + '-' + terrainCount + '-' + i,
+        id: terrainCombination.id + '-' + i,
         terrains: [...terrainCombination.terrains, otherTerrain],
         totalContenance: combinedContenance
       }
