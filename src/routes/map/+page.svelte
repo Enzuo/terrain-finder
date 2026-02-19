@@ -47,9 +47,9 @@
   })
 
   // Watch for terrainSize changes and update map
-  $: updateTerrains(terrainData, terrainSize, terrainMargin)
+  $: updateTerrains(terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth)
 
-  const updateTerrains = debounce((terrainData, terrainSize, terrainMargin) => {
+  const updateTerrains = debounce((terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth) => {
     if (map && terrainData) {
       if(isUsingTerrainCombinator) {
         terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
