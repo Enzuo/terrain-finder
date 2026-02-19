@@ -1,9 +1,9 @@
 <script>
-  /** @type {App.TerrainFeature[]} */
+  /** @type {App.TerrainCombination[]} */
   export let terrains = [];
   /** @type {string|null} */
   export let selectedTerrainId = null;
-  /** @type {(terrain: App.TerrainFeature) => void} */
+  /** @type {(terrain: App.TerrainCombination) => void} */
   export let onTerrainClick;
   export let terrainListContainer;
   export let terrainListItems;
@@ -24,17 +24,17 @@
 >
   <strong>All terrains (sorted by closest size):</strong>
   <ul style="margin: 0; padding-left: 1em;">
-    {#each terrains as poly, i (poly.id)}
+    {#each terrains as terrain, i (terrain.id)}
       <li style="list-style: none; margin-bottom: 0.25em;" bind:this={terrainListItems[i]}>
         <button
           type="button"
           style="cursor:pointer; text-decoration:underline; border:none; background:none; padding:0; font:inherit; {selectedTerrainId ===
-          poly.id
+          terrain.id
             ? 'background:#e0f0ff; color:#0057b8; font-weight:bold;'
             : 'color:#0077ff;'}"
-          on:click={() => onTerrainClick(poly)}
+          on:click={() => onTerrainClick(terrain)}
         >
-          {poly.id} — {poly.properties.contenance} m2 - {poly.properties.numero}
+          {terrain.id} — {terrain.totalContenance} m2
         </button>
       </li>
     {/each}

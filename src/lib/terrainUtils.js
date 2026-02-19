@@ -51,6 +51,7 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
     // Try out terrains combinations
     /** @type {App.TerrainCombination} */
     let initialCombination = {
+      id: terrain.id,
       terrains: [terrain],
       totalContenance: terrain.properties.contenance
     }
@@ -69,7 +70,11 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
   )
   console.log('Combinations after filtering duplicates:', combinations.map(c => c.terrains.map(t => t.id)))
 
-  return combinations
+  return combinations.sort(
+    (a, b) =>
+      Math.abs(a.totalContenance - terrainSize) -
+      Math.abs(b.totalContenance - terrainSize)
+  );
 }
 
 /**
@@ -80,7 +85,7 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
  * @param {number} depth
  * @param {number} maxDepth
  * 
- * @returns {App.TerrainFeature[]} 
+ * @returns {App.TerrainFeatureWithAdjacents[]} 
  */
 function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxDepth = 2, totalContenance = terrain.properties.contenance) {
   if(depth > maxDepth) {
@@ -92,7 +97,7 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
     && t.properties.contenance + totalContenance <= terrainmaxSize
   )
   
-  /** @type {App.TerrainFeature[]} */
+  /** @type {App.TerrainFeatureWithAdjacents[]} */
   let adjacentTerrains = []
   terrainsPool.forEach((otherTerrain) => {
     // if (otherTerrain.id === terrain.id) return // TODO should not be needed if we remove from pool when we find an adjacent terrain
@@ -115,7 +120,7 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
 /**
  * 
  * @param {App.TerrainCombination} terrainCombination 
- * @param {App.TerrainFeature[]} terrainsPool 
+ * @param {App.TerrainFeatureWithAdjacents[]} terrainsPool 
  * @param {number} terrainMinSize 
  * @param {number} terrainMaxSize 
  * @param {number} terrainCount
@@ -124,6 +129,9 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
  */
 function tryTerrainCombinations(terrainCombination, terrainsPool, terrainMinSize, terrainMaxSize, terrainCount, maxTerrainCount ) {
   if(terrainCount > maxTerrainCount) {
+    if(terrainCombination.totalContenance >= terrainMinSize) {
+      return [terrainCombination]
+    }
     return []
   }
 
@@ -141,6 +149,7 @@ function tryTerrainCombinations(terrainCombination, terrainsPool, terrainMinSize
     const combinedContenance = terrainCombination.totalContenance + otherTerrain.properties.contenance
     if(combinedContenance <= terrainMaxSize) {
       const newCombination = {
+        id: terrainCombination.id + '-' + terrainCount + '-' + i,
         terrains: [...terrainCombination.terrains, otherTerrain],
         totalContenance: combinedContenance
       }
@@ -166,6 +175,7 @@ function tryTerrainCombinations(terrainCombination, terrainsPool, terrainMinSize
  * @returns {boolean}
  */
 function areGeometriesEdgeAdjacent(coordsA, coordsB, tolerance = 1e-7) {
+  /** @type {(a: [number, number], b: [number, number]) => boolean} */
   function pointsEqual([lng1, lat1], [lng2, lat2]) {
     return Math.abs(lng1 - lng2) < tolerance && Math.abs(lat1 - lat2) < tolerance;
   }

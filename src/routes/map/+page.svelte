@@ -17,7 +17,7 @@
   let error = ''
   let terrainSize = 0
   let terrainMargin = 0
-  /** @type {App.TerrainFeature[]} */
+  /** @type {App.TerrainCombination[]} */
   let terrains = []
   /** @type {string|null} */
   let selectedTerrainId = null
@@ -55,19 +55,21 @@
         terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
       } else {
         terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
+          // Wrap each terrain in a combination for easier handling in the UI
+          .map(t => ({ id: t.id, terrains: [t], totalContenance: t.properties.contenance })) 
       }
-      // map.displayTerrains(terrains, selectedTerrainId)
-      map.displayTerrains(terrainData.features, selectedTerrainId) // todo disp all terrains
+      map.displayTerrains(terrains, selectedTerrainId)
+      // map.displayTerrains(terrainData.features, selectedTerrainId) // todo disp all terrains
     }
   }, 500)
 
   /**
    * Center the map on the given polygon feature and copy its first coordinate to clipboard
-   * @param {App.TerrainFeature} feature
+   * @param {App.TerrainCombination} terrain
    */
-  function selectTerrain(feature) {
+  function selectTerrain(terrain) {
     if (!map) return
-    selectedTerrainId = feature.id
+    selectedTerrainId = terrain.id
     map.displayTerrains(terrains, selectedTerrainId)
     map.centerOnTerrain(selectedTerrainId)
   }
