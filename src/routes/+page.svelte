@@ -19,7 +19,7 @@
 
   $: debouncedSearch(communeQuery, communesMap);
 
-  const DataGouvLink = 'https://files.data.gouv.fr/cadastre/etalab-cadastre/2023-01-01/geojson/communes/';
+  const DataGouvLink = 'https://cadastre.data.gouv.fr/data/etalab-cadastre/2025-12-01/geojson/communes/';
 
   onMount(async () => {
     dbKeys = await listTerrainKeys();
