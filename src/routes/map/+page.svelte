@@ -24,6 +24,7 @@
   let isUsingTerrainCombinator = false
   let terrainCombinatorMax = 2
   let terrainCombinatorDepth = 2
+  let isSearchRunning = false
 
   /** @type {string | null} */
   let currentFileKey = null
@@ -48,19 +49,21 @@
   })
 
   // Watch for terrainSize changes and update map
-  $: updateTerrains(terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth)
+  $: updateTerrains(terrainData, terrainSize, terrainMargin)
 
   const updateTerrains = debounce((terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth) => {
     if (map && terrainData) {
       const start = performance.now();
       if(isUsingTerrainCombinator) {
-        // TODO prevent relaunching combinator if already running
-        terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
+        // MANUAL Launch
+        // TODO with background workers could run default version on change 
+        // TODO and more costly versions with button
+        // terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
       } else {
         terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
           .map(t => ({ id: t.id, terrains: [t], totalContenance: t.properties.contenance })) 
+        map.displayTerrains(terrains, selectedTerrainId)
       }
-      map.displayTerrains(terrains, selectedTerrainId)
       filterDuration = Math.round(performance.now() - start);
     }
   }, 500)
@@ -93,6 +96,17 @@
     if (nextIdx !== idx) selectTerrain(terrains[nextIdx])
   }
 
+  function launchCombinator() {
+    if (map && terrainData && !isSearchRunning) {
+      isSearchRunning = true;
+      const start = performance.now();
+      terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth);
+      map.displayTerrains(terrains, selectedTerrainId);
+      filterDuration = Math.round(performance.now() - start);
+      isSearchRunning = false;
+    }
+  }
+
   // For scrolling selected polygon into view
   let terrainListContainer
   /** @type {HTMLLIElement[]} */
@@ -119,6 +133,8 @@
     bind:isUsingTerrainCombinator 
     bind:terrainCombinatorMax 
     bind:terrainCombinatorDepth
+    launchCombinator={launchCombinator}
+    isSearchRunning={isSearchRunning}
   />
   <TerrainList
     {terrains}

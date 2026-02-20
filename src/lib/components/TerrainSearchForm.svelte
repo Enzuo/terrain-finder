@@ -10,6 +10,11 @@
   export let terrainCombinatorMax;
   /** @type {number} */
   export let terrainCombinatorDepth;
+
+  /** @type {() => void} */
+  export let launchCombinator;
+  /** @type {boolean} */
+  export let isSearchRunning;
 </script>
 
 <div class="form-group">
@@ -39,11 +44,16 @@
   />
 </div>
 
-<div class="form-group">
-  <label class="form-label">
+<div class="form-group" style="display:flex;align-items:center;gap:0.5em;">
+  <label class="form-label" style="margin-bottom:0;">
     <input type="checkbox" bind:checked={isUsingTerrainCombinator} />
-    Use Terrain Combinator
+    Terrain Combinator
   </label>
+  {#if isUsingTerrainCombinator}
+    <button disabled={isSearchRunning} type="button" class="launch-btn" on:click={launchCombinator}>
+      Launch
+    </button>
+  {/if}
 </div>
 
 {#if isUsingTerrainCombinator}
@@ -93,5 +103,18 @@
   border-radius: 4px;
   border: 1px solid #ccc;
   font-size: 1rem;
+}
+.launch-btn {
+  font-size: 0.9em;
+  padding: 0.3em 0.8em;
+  border-radius: 4px;
+  border: 1px solid #0077ff;
+  background: #f7faff;
+  color: #0077ff;
+  cursor: pointer;
+  margin-left: 0.5em;
+}
+.launch-btn:hover {
+  background: #e0f0ff;
 }
 </style>
