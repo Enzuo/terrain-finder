@@ -35,12 +35,17 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
   var terrainminSize = terrainSize - terrainMargin
   var terrainsPool = terrainData.features.filter(f => f.properties.contenance < terrainmaxSize)
 
+  // Optimize by only trying combinations with terrains that are big enough to reach the terrainminSize when combined 
+  // (otherwise we would combine a lot of small terrains that would never reach the desired size)
+  // 10x increase when looking for large terrains (3000m2) with default 2 combinatorMax
+  var initialTerrainsPool = terrainsPool.filter(f => f.properties.contenance >= terrainminSize/(combinatorMax+1))
+
   /** @type {App.TerrainCombination[]} */
   let combinations = []
-  for (let terrain of terrainsPool) {
+  for (let terrain of initialTerrainsPool) {
 
     let adjTerrains = findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, 1, combinatorDepth)
-    console.log('Adjacent terrains for terrain', terrain.id, 'found:', adjTerrains.map(t => t.id))
+    // console.log('Adjacent terrains for terrain', terrain.id, 'found:', adjTerrains.map(t => t.id))
     
     // Fitler duplicates
     // adjTerrains = adjTerrains.filter((t, index, self) =>
@@ -56,7 +61,7 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
       totalContenance: terrain.properties.contenance
     }
     let newCombinations = tryTerrainCombinations(initialCombination, adjTerrains, terrainminSize, terrainmaxSize, 1, combinatorMax)
-    console.log('Combinations for terrain', terrain.id, 'found:', newCombinations.map(c => c.terrains.map(t => t.id)))
+    // console.log('Combinations for terrain', terrain.id, 'found:', newCombinations.map(c => c.terrains.map(t => t.id)))
     combinations = combinations.concat(newCombinations)
   }
 
@@ -68,7 +73,7 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
       return ids1 === ids2
     })
   )
-  console.log('Combinations after filtering duplicates:', combinations.map(c => c.terrains.map(t => t.id)))
+  // console.log('Combinations after filtering duplicates:', combinations.map(c => c.terrains.map(t => t.id)))
 
   return combinations.sort(
     (a, b) =>
@@ -102,7 +107,7 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
   terrainsPool.forEach((otherTerrain) => {
     // if (otherTerrain.id === terrain.id) return // TODO should not be needed if we remove from pool when we find an adjacent terrain
     if (areGeometriesEdgeAdjacent(terrain.geometry.coordinates[0], otherTerrain.geometry.coordinates[0])) {
-      console.log('Found adjacent terrain:', terrain.id, otherTerrain.id, depth)
+      // console.log('Found adjacent terrain:', terrain.id, otherTerrain.id, depth)
       let adjacentTerrain = JSON.parse(JSON.stringify(otherTerrain)) // Deep copy to avoid mutating original data
       adjacentTerrain.depth = depth
       adjacentTerrain.fromId = terrain.id
@@ -184,7 +189,7 @@ function tryTerrainCombinations(terrainCombination, terrainsPool, terrainMinSize
  * @param {number} [tolerance=1e-7]
  * @returns {boolean}
  */
-function areGeometriesEdgeAdjacent(coordsA, coordsB, tolerance = 1e-7) {
+function areGeometriesEdgeAdjacent(coordsA, coordsB, tolerance = 1e-5) {
   /** @type {(a: [number, number], b: [number, number]) => boolean} */
   function pointsEqual([lng1, lat1], [lng2, lat2]) {
     return Math.abs(lng1 - lng2) < tolerance && Math.abs(lat1 - lat2) < tolerance;

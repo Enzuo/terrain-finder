@@ -54,6 +54,7 @@
     if (map && terrainData) {
       const start = performance.now();
       if(isUsingTerrainCombinator) {
+        // TODO prevent relaunching combinator if already running
         terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
       } else {
         terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
