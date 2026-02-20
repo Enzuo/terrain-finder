@@ -21,6 +21,38 @@ export function filterTerrains(terrainData, terrainSize, terrainMargin) {
   );
 }
 
+
+/**
+ * Runs filterTerrainsWithCombinator in a Web Worker
+ * @param {App.TerrainData} terrainData 
+ * @param {number} terrainSize 
+ * @param {number} terrainMargin 
+ * @param {number} combinatorMax 
+ * @param {number} combinatorDepth 
+ * @return {Promise<App.TerrainCombination[]>}
+ */
+export function filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, combinatorMax, combinatorDepth) {
+  return new Promise((resolve, reject) => {
+    let worker;
+    try {
+      worker = new Worker(new URL('./terrainCombinator.worker.js', import.meta.url), { type: 'module' });
+    } catch (e) {
+      reject(e);
+      return;
+    }
+    worker.onmessage = (e) => {
+      resolve(e.data.result);
+      worker.terminate();
+    };
+    worker.onerror = (e) => {
+      reject(e);
+      worker.terminate();
+    };
+    var params = { terrainData, terrainSize, terrainMargin, terrainCombinatorMax: combinatorMax, terrainCombinatorDepth: combinatorDepth }
+    worker.postMessage(params);
+  });
+}
+
 /**
  * 
  * @param {App.TerrainData} terrainData 

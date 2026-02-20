@@ -4,7 +4,7 @@
   import CollapsibleSidebar from '$lib/components/CollapsibleSidebar.svelte'
   import TerrainSearchForm from '$lib/components/TerrainSearchForm.svelte'
   import TerrainList from '$lib/components/TerrainList.svelte'
-  import { filterTerrains, filterTerrainsWithCombinator } from '$lib/terrainUtils.js'
+  import { filterTerrains, filterTerrainsWithCombinatorAsync } from '$lib/terrainUtils.js'
   import { loadTerrainData } from '$lib/terrainDb.js'
   import { debounce } from '$lib/utils'
 
@@ -49,16 +49,17 @@
   })
 
   // Watch for terrainSize changes and update map
-  $: updateTerrains(terrainData, terrainSize, terrainMargin)
+  $: updateTerrains(terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth)
 
   const updateTerrains = debounce((terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth) => {
     if (map && terrainData) {
       const start = performance.now();
       if(isUsingTerrainCombinator) {
-        // MANUAL Launch
-        // TODO with background workers could run default version on change 
-        // TODO and more costly versions with button
-        // terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
+        // AUTO Launch if parameters are low
+        if(terrainCombinatorMax <= 2 || terrainCombinatorDepth <= 2) {
+          launchCombinator()
+        }
+        // MANUAL Launch otherwise (button)
       } else {
         terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
           .map(t => ({ id: t.id, terrains: [t], totalContenance: t.properties.contenance })) 
@@ -100,10 +101,16 @@
     if (map && terrainData && !isSearchRunning) {
       isSearchRunning = true;
       const start = performance.now();
-      terrains = filterTerrainsWithCombinator(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth);
-      map.displayTerrains(terrains, selectedTerrainId);
-      filterDuration = Math.round(performance.now() - start);
-      isSearchRunning = false;
+      filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
+      .then((terrains) => {
+        map?.displayTerrains(terrains, selectedTerrainId);
+        filterDuration = Math.round(performance.now() - start);
+        isSearchRunning = false;
+      })
+      .catch((error) => {
+        console.error('Error running combinator:', error);
+        isSearchRunning = false;
+      });
     }
   }
 
@@ -144,7 +151,9 @@
     {terrainListItems}
   />
   <div class="perf-bar">
-    {#if filterDuration}
+    {#if isSearchRunning}
+      Searching...
+    {:else if filterDuration}
       {filterDuration} ms
     {/if}
   </div>

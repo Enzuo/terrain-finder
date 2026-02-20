@@ -113,8 +113,16 @@
   color: #0077ff;
   cursor: pointer;
   margin-left: 0.5em;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
 }
-.launch-btn:hover {
+.launch-btn:hover:enabled {
   background: #e0f0ff;
+}
+.launch-btn:disabled {
+  background: #eee;
+  color: #aaa;
+  border-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>
