@@ -29,9 +29,10 @@ export function filterTerrains(terrainData, terrainSize, terrainMargin) {
  * @param {number} terrainMargin 
  * @param {number} combinatorMax 
  * @param {number} combinatorDepth 
+ * @param {function(string):void} onLog - callback to receive log messages from the worker
  * @return {Promise<App.TerrainCombination[]>}
  */
-export function filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, combinatorMax, combinatorDepth) {
+export function filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, combinatorMax, combinatorDepth, onLog) {
   return new Promise((resolve, reject) => {
     let worker;
     try {
@@ -41,7 +42,11 @@ export function filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terr
       return;
     }
     worker.onmessage = (e) => {
-      resolve(e.data.result);
+      if(e.data.type === 'log') {
+        onLog(e.data.message)
+        return
+      }
+      resolve(e.data.result)
       worker.terminate();
     };
     worker.onerror = (e) => {
@@ -74,7 +79,9 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
 
   /** @type {App.TerrainCombination[]} */
   let combinations = []
-  for (let terrain of initialTerrainsPool) {
+  for (let i = 0; i < initialTerrainsPool.length; i++) {
+    let terrain = initialTerrainsPool[i];
+    self.postMessage({ type : 'log', message : `${i}/${initialTerrainsPool.length}` });
 
     let adjTerrains = findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, 1, combinatorDepth)
     // console.log('Adjacent terrains for terrain', terrain.id, 'found:', adjTerrains.map(t => t.id))

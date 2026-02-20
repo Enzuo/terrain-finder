@@ -25,16 +25,17 @@
   let terrainCombinatorMax = 2
   let terrainCombinatorDepth = 2
   let isSearchRunning = false
+  let searchTaskStartTime = 0;
+  let filterDuration = 0;
+  let taskLog = '';
 
   /** @type {string | null} */
   let currentFileKey = null
-  let filterDuration = 0;
 
   onMount(() => {
     currentFileKey = localStorage.getItem('currentFile')
     loadTerrainData(currentFileKey || '').then((data) => {
       terrainData = data
-      console.log('Loaded terrain data:', JSON.stringify(terrainData, null, 2))
       var defaultView =
         terrainData && terrainData.features && terrainData.features.length
           ? terrainData.features[0].geometry.coordinates[0][0].toReversed()
@@ -56,7 +57,7 @@
       const start = performance.now();
       if(isUsingTerrainCombinator) {
         // AUTO Launch if parameters are low
-        if(terrainCombinatorMax <= 2 || terrainCombinatorDepth <= 2) {
+        if(terrainCombinatorMax <= 2 && terrainCombinatorDepth <= 2) {
           launchCombinator()
         }
         // MANUAL Launch otherwise (button)
@@ -100,11 +101,11 @@
   function launchCombinator() {
     if (map && terrainData && !isSearchRunning) {
       isSearchRunning = true;
-      const start = performance.now();
-      filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth)
+      searchTaskStartTime = performance.now();
+      filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth, (msg) => {taskLog = msg})
       .then((terrains) => {
         map?.displayTerrains(terrains, selectedTerrainId);
-        filterDuration = Math.round(performance.now() - start);
+        filterDuration = Math.round(performance.now() - searchTaskStartTime);
         isSearchRunning = false;
       })
       .catch((error) => {
@@ -152,7 +153,7 @@
   />
   <div class="perf-bar">
     {#if isSearchRunning}
-      Searching...
+      {taskLog}
     {:else if filterDuration}
       {filterDuration} ms
     {/if}
