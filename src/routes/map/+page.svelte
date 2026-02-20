@@ -25,9 +25,9 @@
   let terrainCombinatorMax = 2
   let terrainCombinatorDepth = 2
   let isSearchRunning = false
-  let searchTaskStartTime = 0;
-  let filterDuration = 0;
-  let taskLog = '';
+  let searchTaskStartTime = 0
+  let filterDuration = 0
+  let taskLog = ''
 
   /** @type {string | null} */
   let currentFileKey = null
@@ -50,25 +50,45 @@
   })
 
   // Watch for terrainSize changes and update map
-  $: updateTerrains(terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth)
+  $: updateTerrains(
+    terrainData,
+    terrainSize,
+    terrainMargin,
+    isUsingTerrainCombinator,
+    terrainCombinatorMax,
+    terrainCombinatorDepth
+  )
 
-  const updateTerrains = debounce((terrainData, terrainSize, terrainMargin, isUsingTerrainCombinator, terrainCombinatorMax, terrainCombinatorDepth) => {
-    if (map && terrainData) {
-      const start = performance.now();
-      if(isUsingTerrainCombinator) {
-        // AUTO Launch if parameters are low
-        if(terrainCombinatorMax <= 2 && terrainCombinatorDepth <= 2) {
-          launchCombinator()
+  const updateTerrains = debounce(
+    (
+      terrainData,
+      terrainSize,
+      terrainMargin,
+      isUsingTerrainCombinator,
+      terrainCombinatorMax,
+      terrainCombinatorDepth
+    ) => {
+      if (map && terrainData) {
+        const start = performance.now()
+        if (isUsingTerrainCombinator) {
+          // AUTO Launch if parameters are low
+          if (terrainCombinatorMax <= 2 && terrainCombinatorDepth <= 2) {
+            launchCombinator()
+          }
+          // MANUAL Launch otherwise (button)
+        } else {
+          terrains = filterTerrains(terrainData, terrainSize, terrainMargin).map((t) => ({
+            id: t.id,
+            terrains: [t],
+            totalContenance: t.properties.contenance
+          }))
+          map.displayTerrains(terrains, selectedTerrainId)
         }
-        // MANUAL Launch otherwise (button)
-      } else {
-        terrains = filterTerrains(terrainData, terrainSize, terrainMargin)
-          .map(t => ({ id: t.id, terrains: [t], totalContenance: t.properties.contenance })) 
-        map.displayTerrains(terrains, selectedTerrainId)
+        filterDuration = Math.round(performance.now() - start)
       }
-      filterDuration = Math.round(performance.now() - start);
-    }
-  }, 500)
+    },
+    500
+  )
 
   /**
    * Center the map on the given polygon feature and copy its first coordinate to clipboard
@@ -100,18 +120,28 @@
 
   function launchCombinator() {
     if (map && terrainData && !isSearchRunning) {
-      isSearchRunning = true;
-      searchTaskStartTime = performance.now();
-      filterTerrainsWithCombinatorAsync(terrainData, terrainSize, terrainMargin, terrainCombinatorMax, terrainCombinatorDepth, (msg) => {taskLog = msg})
-      .then((terrains) => {
-        map?.displayTerrains(terrains, selectedTerrainId);
-        filterDuration = Math.round(performance.now() - searchTaskStartTime);
-        isSearchRunning = false;
-      })
-      .catch((error) => {
-        console.error('Error running combinator:', error);
-        isSearchRunning = false;
-      });
+      isSearchRunning = true
+      searchTaskStartTime = performance.now()
+      filterTerrainsWithCombinatorAsync(
+        terrainData,
+        terrainSize,
+        terrainMargin,
+        terrainCombinatorMax,
+        terrainCombinatorDepth,
+        (msg) => {
+          taskLog = msg
+        }
+      )
+        .then((terrainsResult) => {
+          terrains = terrainsResult
+          map?.displayTerrains(terrains, selectedTerrainId)
+          filterDuration = Math.round(performance.now() - searchTaskStartTime)
+          isSearchRunning = false
+        })
+        .catch((error) => {
+          console.error('Error running combinator:', error)
+          isSearchRunning = false
+        })
     }
   }
 
@@ -135,14 +165,14 @@
 </svelte:head>
 
 <CollapsibleSidebar title="Map {currentFileKey}">
-  <TerrainSearchForm 
-    bind:terrainSize 
-    bind:terrainMargin 
-    bind:isUsingTerrainCombinator 
-    bind:terrainCombinatorMax 
+  <TerrainSearchForm
+    bind:terrainSize
+    bind:terrainMargin
+    bind:isUsingTerrainCombinator
+    bind:terrainCombinatorMax
     bind:terrainCombinatorDepth
-    launchCombinator={launchCombinator}
-    isSearchRunning={isSearchRunning}
+    {launchCombinator}
+    {isSearchRunning}
   />
   <TerrainList
     {terrains}
