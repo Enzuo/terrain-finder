@@ -52,16 +52,32 @@
   font-size: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
+.close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.3em;
+  padding: 0.2em 0.5em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: #444;
+  background: #f0f0f0;
+}
 </style>
 
+{#if !open}
 <button class="toggle-btn" on:click={toggle} aria-label="Toggle sidebar">
   {#if open}Close{:else}Open{/if}
 </button>
+{/if}
 
 <aside class="sidebar {open ? 'open' : ''}">
   <div class="sidebar-header">
     <span>{title}</span>
-    <button on:click={toggle} aria-label="Close sidebar">×</button>
+    <button class="close-btn" on:click={toggle} aria-label="Close sidebar">×</button>
   </div>
   <div class="sidebar-content">
     <slot />
