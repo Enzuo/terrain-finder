@@ -81,7 +81,9 @@ export function filterTerrainsWithCombinator(terrainData, terrainSize, terrainMa
   let combinations = []
   for (let i = 0; i < initialTerrainsPool.length; i++) {
     let terrain = initialTerrainsPool[i];
-    self.postMessage({ type : 'log', message : `${i}/${initialTerrainsPool.length}` });
+    if (typeof self !== 'undefined') {
+      self.postMessage({ type : 'log', message : `${i}/${initialTerrainsPool.length}` });
+    }
 
     let adjTerrains = findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, 1, combinatorDepth)
     // console.log('Adjacent terrains for terrain', terrain.id, 'found:', adjTerrains.map(t => t.id))
@@ -145,7 +147,7 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
   let adjacentTerrains = []
   terrainsPool.forEach((otherTerrain) => {
     // if (otherTerrain.id === terrain.id) return // TODO should not be needed if we remove from pool when we find an adjacent terrain
-    if (areGeometriesEdgeAdjacent(terrain.geometry.coordinates[0], otherTerrain.geometry.coordinates[0])) {
+    if (polygonsShareEdge(terrain.geometry.coordinates[0], otherTerrain.geometry.coordinates[0])) {
       // console.log('Found adjacent terrain:', terrain.id, otherTerrain.id, depth)
       let adjacentTerrain = JSON.parse(JSON.stringify(otherTerrain)) // Deep copy to avoid mutating original data
       adjacentTerrain.depth = depth
@@ -252,3 +254,99 @@ function areGeometriesEdgeAdjacent(coordsA, coordsB, tolerance = 1e-5) {
 }
 
 
+
+/**
+ * 
+ * @param {Array<[number, number]>} polygon
+ * @returns {[[number, number], [number, number]][]}
+ */
+function getEdges(polygon) {
+  const edges = [];
+  for (let i = 0; i < polygon.length; i++) {
+    const a = polygon[i];
+    const b = polygon[(i + 1) % polygon.length];
+    edges.push([a, b]);
+  }
+  return edges;
+}
+
+/**
+ * 
+ * @param {[number, number]} p1 
+ * @param {[number, number]} p2 
+ * @param {[number, number]} p3 
+ * @returns 
+ */
+function cross(p1, p2, p3) {
+  return (p2[0] - p1[0]) * (p3[1] - p1[1]) -
+         (p2[1] - p1[1]) * (p3[0] - p1[0]);
+}
+
+/**
+ * 
+ * @param {[number, number]} a 
+ * @param {[number, number]} b 
+ * @param {[number, number]} c 
+ * @param {[number, number]} d 
+ * @returns 
+ */
+function areCollinear(a, b, c, d) {
+  const precision = 1e-12;
+  return Math.abs(cross(a, b, c)) < precision && Math.abs(cross(a, b, d)) < precision;
+}
+
+/**
+ * 
+ * @param {number} a1 
+ * @param {number} a2 
+ * @param {number} b1 
+ * @param {number} b2 
+ * @returns 
+ */
+function overlap1D(a1, a2, b1, b2) {
+  const minA = Math.min(a1, a2);
+  const maxA = Math.max(a1, a2);
+  const minB = Math.min(b1, b2);
+  const maxB = Math.max(b1, b2);
+
+  return Math.max(minA, minB) < Math.min(maxA, maxB);
+}
+
+/**
+ * 
+ * @param {[[number, number], [number, number]]} seg1 
+ * @param {[[number, number], [number, number]]} seg2 
+ * @returns 
+ */
+function segmentsShareEdge(seg1, seg2) {
+  const [a, b] = seg1;
+  const [c, d] = seg2;
+
+  // Must be collinear
+  if (!areCollinear(a, b, c, d)) return false;
+
+  // Check overlap in X or Y direction
+  if (a[0] !== b[0]) {
+    return overlap1D(a[0], b[0], c[0], d[0]);
+  } else {
+    return overlap1D(a[1], b[1], c[1], d[1]);
+  }
+}
+
+/** 
+ * @param {Array<[number, number]>} poly1
+ * @param {Array<[number, number]>} poly2
+*/
+function polygonsShareEdge(poly1, poly2) {
+  const edges1 = getEdges(poly1);
+  const edges2 = getEdges(poly2);
+
+  for (const e1 of edges1) {
+    for (const e2 of edges2) {
+      if (segmentsShareEdge(e1, e2)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
