@@ -138,9 +138,15 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
     return []
   }
 
+  const remainingTerrainContenance = terrainmaxSize - totalContenance
+
   terrainsPool = terrainsPool.filter(t => 
-    t.id !== terrain.id 
-    && t.properties.contenance + totalContenance <= terrainmaxSize
+    t.properties.contenance <= remainingTerrainContenance
+    // Optimization: only check terrains that are within reasonable distance of the current terrain 
+    // (otherwise we would check a lot of distant terrains that would never be combined)
+    // 3x faster
+    && roughDistanceMeters(t.geometry.coordinates[0][0], terrain.geometry.coordinates[0][0]) < remainingTerrainContenance * 1.5
+    && t.id !== terrain.id 
   )
   
   /** @type {App.TerrainFeatureWithAdjacents[]} */
@@ -162,6 +168,17 @@ function findAdjacentTerrains(terrain, terrainsPool, terrainmaxSize, depth, maxD
   return adjacentTerrains
 }
 
+/**
+ * Calculate rough distance in meters between two coordinates [lng, lat].
+ * @param {[number, number]} coord1
+ * @param {[number, number]} coord2
+ * @returns {number}
+ */
+function roughDistanceMeters([lng1, lat1], [lng2, lat2]) {
+  const dx = (lng2 - lng1) * 78800;
+  const dy = (lat2 - lat1) * 111200;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 /**
  * 
