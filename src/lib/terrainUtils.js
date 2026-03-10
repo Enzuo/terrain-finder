@@ -275,9 +275,9 @@ function areGeometriesEdgeAdjacent(coordsA, coordsB, tolerance = 1e-5) {
 /**
  * 
  * @param {Array<[number, number]>} polygon
- * @returns {[[number, number], [number, number]][]}
  */
 function getEdges(polygon) {
+  /** @type {[[number, number], [number, number]][]} */
   const edges = [];
   for (let i = 0; i < polygon.length; i++) {
     const a = polygon[i];

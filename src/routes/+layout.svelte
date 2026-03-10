@@ -6,6 +6,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+  <title>Terrain Finder</title>
 </svelte:head>
 
 {@render children()}
